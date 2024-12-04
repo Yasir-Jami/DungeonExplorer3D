@@ -105,15 +105,12 @@ function interact(x, y, z) {
 }
 
 function randomizeChestPosition() {
-    var x = 1.0;
-    var y = 0.5;
-    var z = 0.0;
-
-    x = Math.floor(Math.random() * 7);
-    z = Math.floor(Math.random() * 7);
-
-    return x, y, z;
+    const x = Math.floor(Math.random() * 7);
+    const y = 0.5;
+    const z = Math.floor(Math.random() * 7);
+    return { x, y, z };
 }
+
 
 const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 if (!program) {
@@ -346,9 +343,15 @@ const boundary = {
     maxZ: gridSize * gridGap - cubeSize,
 };
 
-// Handle keyboard input for movement
+/// track camera mode
+let isTopDownView = true;
+
 window.addEventListener("keydown", (event) => {
     switch (event.key) {
+        case "g": // Toggle camera mode
+            isTopDownView = !isTopDownView;
+            updateCameraView();
+            break;
         case "w": // Move forward
             if (cubePosition.z - movementStep >= boundary.minZ) {
                 cubePosition.z -= movementStep;
@@ -373,42 +376,51 @@ window.addEventListener("keydown", (event) => {
             cubePosition.x = 0;
             cubePosition.y = cubeSize;
             cubePosition.z = 0;
-            mat4.identity(viewMatrix); // Reset camera view
-            mat4.lookAt(viewMatrix, [0, 10, 15], [0, 0, 0], [0, 1, 0]); // Resdet camera position
+            isTopDownView = true; 
+            updateCameraView();
             break;
         case "e":
-        interact(cubePosition.x, cubePosition.y, cubePosition.z);
-        break;
+            interact(cubePosition.x, cubePosition.y, cubePosition.z);
+            break;
     }
 });
 
-// Mouse movement for rotating camera
-let isMouseDown = false;
-let lastMousePosition = { x: 0, y: 0 };
+// Function to update the camera view
+function updateCameraView() {
+    mat4.identity(viewMatrix);
 
-// Track mouse events
-canvas.addEventListener("mousedown", (event) => {
-    isMouseDown = true;
-    lastMousePosition = { x: event.clientX, y: event.clientY };
-});
-canvas.addEventListener("mousemove", (event) => {
-    if (isMouseDown) {
-        const deltaX = event.clientX - lastMousePosition.x;
-        const deltaY = event.clientY - lastMousePosition.y;
-
-        // Rotate the view matrix based on mouse movement
-        mat4.rotateY(viewMatrix, viewMatrix, deltaX * 0.01);
-        mat4.rotateX(viewMatrix, viewMatrix, deltaY * 0.01);
-
-        lastMousePosition = { x: event.clientX, y: event.clientY };
+    if (isTopDownView) {
+        // Top-down 
+        mat4.lookAt(viewMatrix, [0, 10, 15], [0, 0, 0], [0, 1, 0]);
+    } else {
+        // POV 
+        mat4.lookAt(
+            viewMatrix,
+            [cubePosition.x, cubePosition.y + 0.25, cubePosition.z], // Camera at cube's position
+            [cubePosition.x, cubePosition.y, cubePosition.z - 1],   
+            [0, 1, 0]                                             
+        );
     }
-});
-canvas.addEventListener("mouseup", () => {
-    isMouseDown = false;
-});
-canvas.addEventListener("mouseleave", () => {
-    isMouseDown = false;
-});
+}
+
+// Initialize the camera
+updateCameraView();
+
+function updateCamera() {
+    if (isTopDownView) {
+        // Top-down view
+        mat4.lookAt(viewMatrix, [cubePosition.x, 15, cubePosition.z + 0.1], [cubePosition.x, cubePosition.y, cubePosition.z], [0, 1, 0]);
+    } else {
+        // Over-the-shoulder view
+        const offset = [0, 2, 5]; 
+        const cameraPosition = [
+            cubePosition.x - offset[0],
+            cubePosition.y + offset[1],
+            cubePosition.z + offset[2],
+        ];
+        mat4.lookAt(viewMatrix, cameraPosition, [cubePosition.x, cubePosition.y, cubePosition.z], [0, 1, 0]);
+    }
+}
 
 function render() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Black background
@@ -416,6 +428,7 @@ function render() {
 
   gl.useProgram(program);
 
+  updateCamera();
   // Pass view and projection matrices
   gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix);
   gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
@@ -473,10 +486,9 @@ function render() {
     const chestModelMatrix = mat4.create();
 
     if (randomFlag) {
-        chestPosition.x, chestPosition.y, chestPosition.z = randomizeChestPosition();
+        chestPosition = randomizeChestPosition();
         randomFlag = false;
-    }
-    
+    } 
     
     mat4.translate(chestModelMatrix, chestModelMatrix, [chestPosition.x, chestPosition.y, chestPosition.z]);
 
