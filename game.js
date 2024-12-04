@@ -24,8 +24,9 @@ void main() {
 const fragmentShaderSource = `
 precision mediump float;
 
+
 void main() {
-    gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0); // Gray color for walls
+    gl_FragColor = vec4(0.8, 0.5, 0.0, 0.5); // Orange color for walls
 }
 `;
 
@@ -61,6 +62,23 @@ function createProgram(gl, vertexShaderSource, fragmentShaderSource) {
         return null;
     }
     return program;
+}
+
+function interact(x, y, z) {
+    const text = document.getElementById('interact-text');
+    if (x == chestPosition.x && y == chestPosition.y && z == chestPosition.z) {
+        text.innerHTML = "Got an item!";
+        // Despawn chest
+    }
+
+    else if (x == 7 && y == 0.5 && z == 7) { // Bottom right of grid
+        text.innerHTML = "Moving to the next floor.";
+        // Spawn chest
+    }
+
+    else {
+        text.innerHTML = "Nothing here.";
+    }
 }
 
 const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
@@ -137,40 +155,58 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wallVertices), gl.STATIC_DRAW);
 const cubeSize = 0.5;
 const cubeVertices = [
   // Front face
-  -cubeSize, -cubeSize,  cubeSize,
-   cubeSize, -cubeSize,  cubeSize,
-  -cubeSize,  cubeSize,  cubeSize,
-   cubeSize,  cubeSize,  cubeSize,
+  -cubeSize, cubeSize, cubeSize,
+  cubeSize, cubeSize, cubeSize,
+  -cubeSize, 0, cubeSize,
+  -cubeSize, 0, cubeSize,
+  cubeSize, 0, cubeSize,
+  cubeSize, cubeSize, cubeSize,
 
   // Back face
-  -cubeSize, -cubeSize, -cubeSize,
-   cubeSize, -cubeSize, -cubeSize,
-  -cubeSize,  cubeSize, -cubeSize,
-   cubeSize,  cubeSize, -cubeSize,
+  -cubeSize, 0, -cubeSize,
+  cubeSize, 0, -cubeSize,
+  -cubeSize, cubeSize, -cubeSize,
+
+  cubeSize, 0, -cubeSize,
+  cubeSize, cubeSize, -cubeSize,
+  -cubeSize, cubeSize, -cubeSize,
 
   // Left face
-  -cubeSize, -cubeSize, -cubeSize,
-  -cubeSize, -cubeSize,  cubeSize,
-  -cubeSize,  cubeSize, -cubeSize,
-  -cubeSize,  cubeSize,  cubeSize,
+  -cubeSize, 0, -cubeSize,
+  -cubeSize, 0, cubeSize,
+  -cubeSize, cubeSize, -cubeSize,
+
+  -cubeSize, 0, cubeSize,
+  -cubeSize, cubeSize, cubeSize,
+  -cubeSize, cubeSize, -cubeSize,
 
   // Right face
-   cubeSize, -cubeSize, -cubeSize,
-   cubeSize, -cubeSize,  cubeSize,
-   cubeSize,  cubeSize, -cubeSize,
-   cubeSize,  cubeSize,  cubeSize,
+  cubeSize, 0, -cubeSize,
+  cubeSize, 0, cubeSize,
+  cubeSize, cubeSize, -cubeSize,
+
+  cubeSize, 0, cubeSize,
+  cubeSize, cubeSize, cubeSize,
+  cubeSize, cubeSize, -cubeSize,
 
   // Top face
-  -cubeSize,  cubeSize,  cubeSize,
-   cubeSize,  cubeSize,  cubeSize,
-  -cubeSize,  cubeSize, -cubeSize,
-   cubeSize,  cubeSize, -cubeSize,
+  -cubeSize, cubeSize, -cubeSize,
+  cubeSize, cubeSize, cubeSize,
+  -cubeSize, cubeSize, cubeSize,
+
+  -cubeSize, cubeSize, -cubeSize,
+  cubeSize, cubeSize, cubeSize,
+  cubeSize, cubeSize, -cubeSize,
 
   // Bottom face
-  -cubeSize, -cubeSize,  cubeSize,
-   cubeSize, -cubeSize,  cubeSize,
-  -cubeSize, -cubeSize, -cubeSize,
-   cubeSize, -cubeSize, -cubeSize,
+  -cubeSize, 0, -cubeSize,
+  cubeSize, 0, cubeSize,
+  -cubeSize, 0, cubeSize,
+
+  -cubeSize, 0, -cubeSize,
+  cubeSize, 0, cubeSize,
+  cubeSize, 0, -cubeSize,
+  
 ];
 
 // Create a buffer for the cube
@@ -178,6 +214,66 @@ const cubeBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, cubeBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertices), gl.STATIC_DRAW);
 
+// Chest vertices
+const chestSize = 0.5;
+const chestVertices = [
+  // Front face
+  0, 0, chestSize,
+  0, chestSize, chestSize,
+  chestSize, 0, chestSize,
+  chestSize, chestSize, chestSize,
+  chestSize, 0, chestSize,
+  0, chestSize, chestSize,
+
+  // Back face
+  0, 0, 0,
+  chestSize, 0, 0,
+  0, chestSize, 0,
+  0, chestSize, 0,
+  chestSize, chestSize, 0,
+  chestSize, 0, 0,
+  
+  // Left face
+  0, 0, 0,
+  0, 0, chestSize,
+  0, chestSize, 0,
+  0, chestSize, 0,
+  0, chestSize, chestSize,
+  0, 0, chestSize,
+  
+  // Right face
+  chestSize, 0, 0,
+  chestSize, chestSize, 0, 
+  chestSize, 0, chestSize,
+
+  chestSize, 0, chestSize, 
+  chestSize, chestSize, chestSize,
+  chestSize, chestSize, 0,
+  
+  // Top face
+  0, chestSize, 0, 
+  chestSize, chestSize, chestSize,
+  chestSize, chestSize, 0,
+
+  0, chestSize, 0, 
+  0, chestSize, chestSize,
+  chestSize, chestSize, chestSize,
+
+  // Bottom face
+  0, 0, 0,
+  chestSize, 0, chestSize,
+  0, 0, chestSize,
+
+  0, 0, 0,
+  0, 0, chestSize,
+  chestSize, 0, chestSize,
+
+];
+
+// Create a buffer for the cube
+const chestBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, chestBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(chestVertices), gl.STATIC_DRAW);
 
 // Enable depth testing
 gl.enable(gl.DEPTH_TEST);
@@ -202,6 +298,8 @@ window.addEventListener("resize", resizeCanvas);
 
 // Cube position
 const cubePosition = { x: 0, y: cubeSize, z: 0 };
+
+const chestPosition = { x: 5, y: chestSize, z: -3 };
 
 // Movement step
 const movementStep = 1;
@@ -244,6 +342,9 @@ window.addEventListener("keydown", (event) => {
             mat4.identity(viewMatrix); // Reset camera view
             mat4.lookAt(viewMatrix, [0, 10, 15], [0, 0, 0], [0, 1, 0]); // Reset camera position
             break;
+        case "e":
+        interact(cubePosition.x, cubePosition.y, cubePosition.z);
+        break;
     }
 });
 
@@ -313,6 +414,16 @@ function render() {
   gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(positionAttribLocation);
   gl.drawArrays(gl.TRIANGLES, 0, cubeVertices.length / 3);
+
+  // **Draw chest (Static)**
+  const chestModelMatrix = mat4.create();
+  mat4.translate(chestModelMatrix, chestModelMatrix, [chestPosition.x, chestPosition.y, chestPosition.z]);
+
+  gl.uniformMatrix4fv(modelMatrixLocation, false, chestModelMatrix);
+  gl.bindBuffer(gl.ARRAY_BUFFER, chestBuffer);
+  gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(positionAttribLocation);
+  gl.drawArrays(gl.TRIANGLES, 0, chestVertices.length / 3);
 
   requestAnimationFrame(render);
 }

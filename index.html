@@ -27,6 +27,18 @@
             background-color: rgba(0, 0, 0, 0.7);
             padding: 10px;
             border-radius: 5px;
+        
+        }
+        #interact-text {
+            position: absolute;
+            padding-left: 47%;
+            top: 80px;
+            color: white;
+            font-size: 18px;
+            font-family: Arial, sans-serif;
+            color: rgba(0, 255, 0, 1.0);
+            
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -41,7 +53,10 @@
         <p><strong>A</strong> - Move left</p>
         <p><strong>D</strong> - Move right</p>
         <p><strong>R</strong> - Reset position</p>
+        <p><strong>E</strong> - Interact</p>
     </div>
+
+    <p id="interact-text"></p>
 
     <!-- Include gl-matrix for matrix operations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
