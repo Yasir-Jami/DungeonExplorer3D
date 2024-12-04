@@ -1,6 +1,15 @@
 /// Get the canvas and WebGL context
 const canvas = document.getElementById("glCanvas");
 const gl = canvas.getContext("webgl");
+var playerFlag = true;
+var chestFlag = true;
+var randomFlag = false;
+var r = 0.8;
+var g = 0.5;
+var b = 0.0;
+var a = 0.5;
+
+floor = 0;
 
 // Check if WebGL is supported
 if (!gl) {
@@ -23,10 +32,11 @@ void main() {
 // Fragment shader source
 const fragmentShaderSource = `
 precision mediump float;
+uniform vec4 fColor;
 
 
 void main() {
-    gl_FragColor = vec4(0.8, 0.5, 0.0, 0.5); // Orange color for walls
+  gl_FragColor = fColor; 
 }
 `;
 
@@ -68,17 +78,41 @@ function interact(x, y, z) {
     const text = document.getElementById('interact-text');
     if (x == chestPosition.x && y == chestPosition.y && z == chestPosition.z) {
         text.innerHTML = "Got an item!";
-        // Despawn chest
+        // Do not draw chest
+        chestFlag = false;
     }
 
     else if (x == 7 && y == 0.5 && z == 7) { // Bottom right of grid
         text.innerHTML = "Moving to the next floor.";
-        // Spawn chest
+        // Draw chest
+        gl.uniform4f(fColorLocation, 0.0, 0.0, 1.0, 0.5);
+        chestFlag = true;
+        console.log("Current floor: " + floor);
+        randomFlag = true;
+        if (floor < 3) {
+            floor += 1;
+        }
+
+        else {
+            floor = 0; // reset to original color
+        }
+        
     }
 
     else {
         text.innerHTML = "Nothing here.";
     }
+}
+
+function randomizeChestPosition() {
+    var x = 1.0;
+    var y = 0.5;
+    var z = 0.0;
+
+    x = Math.floor(Math.random() * 7);
+    z = Math.floor(Math.random() * 7);
+
+    return x, y, z;
 }
 
 const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
@@ -91,6 +125,7 @@ const positionAttribLocation = gl.getAttribLocation(program, "a_position");
 const modelMatrixLocation = gl.getUniformLocation(program, "u_modelMatrix");
 const viewMatrixLocation = gl.getUniformLocation(program, "u_viewMatrix");
 const projectionMatrixLocation = gl.getUniformLocation(program, "u_projectionMatrix");
+const fColorLocation = gl.getUniformLocation(program, "fColor");
 
 // Create grid vertices
 const gridVertices = [];
@@ -298,8 +333,7 @@ window.addEventListener("resize", resizeCanvas);
 
 // Cube position
 const cubePosition = { x: 0, y: cubeSize, z: 0 };
-
-const chestPosition = { x: 5, y: chestSize, z: -3 };
+var chestPosition = { x: 5, y: chestSize, z: -3 };
 
 // Movement step
 const movementStep = 1;
@@ -340,7 +374,7 @@ window.addEventListener("keydown", (event) => {
             cubePosition.y = cubeSize;
             cubePosition.z = 0;
             mat4.identity(viewMatrix); // Reset camera view
-            mat4.lookAt(viewMatrix, [0, 10, 15], [0, 0, 0], [0, 1, 0]); // Reset camera position
+            mat4.lookAt(viewMatrix, [0, 10, 15], [0, 0, 0], [0, 1, 0]); // Resdet camera position
             break;
         case "e":
         interact(cubePosition.x, cubePosition.y, cubePosition.z);
@@ -385,6 +419,7 @@ function render() {
   // Pass view and projection matrices
   gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix);
   gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
+  gl.uniform4f(fColorLocation, r, g, b, a);
 
   // **Draw Grid (Static)**
   const gridModelMatrix = mat4.create(); // Identity matrix for static grid
@@ -399,6 +434,21 @@ function render() {
   gl.uniformMatrix4fv(modelMatrixLocation, false, wallModelMatrix);
   gl.bindBuffer(gl.ARRAY_BUFFER, wallBuffer);
   gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
+  
+  // Change floor color
+  if (floor == 0) {
+    gl.uniform4f(fColorLocation, 0.4, 0.0, 1.0, 0.2); // purple
+  }
+  else if (floor == 1) {
+    gl.uniform4f(fColorLocation, 1.0, 0.0, 0.0, 0.5); // red
+  }
+  else if (floor == 2) {
+    gl.uniform4f(fColorLocation, 0.0, 1.0, 0.0, 0.5); // green
+  }
+  else if (floor == 3) {
+    gl.uniform4f(fColorLocation, 1.0, 1.0, 0, 1.0); // yellow
+  }
+  
   gl.enableVertexAttribArray(positionAttribLocation);
 
   for (let i = 0; i < 4; i++) {
@@ -406,24 +456,38 @@ function render() {
   }
 
   // **Draw Cube (Dynamic)**
-  const cubeModelMatrix = mat4.create();
-  mat4.translate(cubeModelMatrix, cubeModelMatrix, [cubePosition.x, cubePosition.y, cubePosition.z]);
+  if (playerFlag) {
+    const cubeModelMatrix = mat4.create();
+    mat4.translate(cubeModelMatrix, cubeModelMatrix, [cubePosition.x, cubePosition.y, cubePosition.z]);
 
-  gl.uniformMatrix4fv(modelMatrixLocation, false, cubeModelMatrix);
-  gl.bindBuffer(gl.ARRAY_BUFFER, cubeBuffer);
-  gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(positionAttribLocation);
-  gl.drawArrays(gl.TRIANGLES, 0, cubeVertices.length / 3);
+    gl.uniformMatrix4fv(modelMatrixLocation, false, cubeModelMatrix);
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeBuffer);
+    gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(positionAttribLocation);
+    gl.uniform4f(fColorLocation, 0.8, 0.5, 0.0, 0.5); // orange
+    gl.drawArrays(gl.TRIANGLES, 0, cubeVertices.length / 3);
+  }
 
   // **Draw chest (Static)**
-  const chestModelMatrix = mat4.create();
-  mat4.translate(chestModelMatrix, chestModelMatrix, [chestPosition.x, chestPosition.y, chestPosition.z]);
+  if (chestFlag) {
+    const chestModelMatrix = mat4.create();
 
-  gl.uniformMatrix4fv(modelMatrixLocation, false, chestModelMatrix);
-  gl.bindBuffer(gl.ARRAY_BUFFER, chestBuffer);
-  gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(positionAttribLocation);
-  gl.drawArrays(gl.TRIANGLES, 0, chestVertices.length / 3);
+    if (randomFlag) {
+        chestPosition.x, chestPosition.y, chestPosition.z = randomizeChestPosition();
+        randomFlag = false;
+    }
+    
+    
+    mat4.translate(chestModelMatrix, chestModelMatrix, [chestPosition.x, chestPosition.y, chestPosition.z]);
+
+    gl.uniformMatrix4fv(modelMatrixLocation, false, chestModelMatrix);
+    gl.bindBuffer(gl.ARRAY_BUFFER, chestBuffer);
+    gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.uniform4f(fColorLocation, 1.0, 1.0, 0.0, 0.5);
+    gl.vertexAttrib4f(positionAttribLocation, 1.0, 1.0, 0, 1.0); // yellow
+    gl.drawArrays(gl.TRIANGLES, 0, chestVertices.length / 3);
+  }
+  
 
   requestAnimationFrame(render);
 }
