@@ -10,3 +10,5 @@ By Sanjay Dhanashekharan and Yasir Jami
     -   Moving to the bottom right corner and pressing E allows you to change floors
 ### Camera
 - G - Change camera perspective
+
+![alt text](https://github.com/Yasir-Jami/DungeonExplorer3D/blob/master/main-image.png)
