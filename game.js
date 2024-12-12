@@ -105,9 +105,11 @@ function interact(x, y, z) {
 }
 
 function randomizeChestPosition() {
-    const x = Math.floor(Math.random() * 7);
+    const max = 6;
+    const min = -6;
+    const x = Math.floor(Math.random() * (max - min) + min);
     const y = 0.5;
-    const z = Math.floor(Math.random() * 7);
+    const z = Math.floor(Math.random() * (max - min) + min);
     return { x, y, z };
 }
 
@@ -495,8 +497,7 @@ function render() {
     gl.uniformMatrix4fv(modelMatrixLocation, false, chestModelMatrix);
     gl.bindBuffer(gl.ARRAY_BUFFER, chestBuffer);
     gl.vertexAttribPointer(positionAttribLocation, 3, gl.FLOAT, false, 0, 0);
-    gl.uniform4f(fColorLocation, 1.0, 1.0, 0.0, 0.5);
-    gl.vertexAttrib4f(positionAttribLocation, 1.0, 1.0, 0, 1.0); // yellow
+    gl.uniform4f(fColorLocation, 1.0, 1.0, 0.0, 0.5); // yellow
     gl.drawArrays(gl.TRIANGLES, 0, chestVertices.length / 3);
   }
   
